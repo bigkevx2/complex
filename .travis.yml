@@ -1,0 +1,36 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t bigkevx2/complex-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true bigkevx2/complex-test npm run test
+
+after_success:
+  - docker build -t bigkevx2/complex-client ./client
+  - docker build -t bigkevx2/complex-nginx ./nginx
+  - docker build -t bigkevx2/complex-server ./server
+  - docker build -t bigkevx2/complex-worker ./worker
+
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push bigkevx2/complex-client
+  - docker push bigkevx2/complex-nginx
+  - docker push bigkevx2/complex-server
+  - docker push bigkevx2/complex-worker
+
+#deploy:
+#  provider: elasticbeanstalk
+#  region: "eu-north-1"
+#  app: "docker-react"
+#  env: "DockerReact-env"
+#  bucket_name: "elasticbeanstalk-eu-north-1-649526409225"
+#  bucket_path: "DockerReact-env"
+#  on:
+#    branch: master
+#  access_key_id: $AWS_ACCESS_KEY
+#  secret_access_key: $AWS_SECRET_KEY
